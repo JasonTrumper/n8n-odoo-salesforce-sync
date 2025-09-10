@@ -1,0 +1,16 @@
+{
+  "odooToSalesforce": {
+    "res.partner": {
+      "name": "LastName",
+      "email": "Email",
+      "phone": "Phone"
+    }
+  },
+  "salesforceToOdoo": {
+    "Contact": {
+      "LastName": "name",
+      "Email": "email",
+      "Phone": "phone"
+    }
+  }
+}
