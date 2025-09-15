@@ -1,0 +1,228 @@
+{
+  "meta": {
+    "instanceId": "your_instance_id"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "odoo-to-salesforce-lead",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "resource": "crm.lead",
+        "operation": "get",
+        "id": "={{$node['Webhook'].json.body.id}}",
+        "additionalFields": {}
+      },
+      "id": "2",
+      "name": "Odoo",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "odoo": {
+          "id": "2",
+          "name": "Odoo account - Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "lead",
+        "operation": "getAll",
+        "queryFilter": {
+          "queryFilter": [
+            {
+              "field": "Email",
+              "operator": "equal",
+              "value": "={{$node['Odoo'].json.email}}"
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "3",
+      "name": "Check Salesforce Lead",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "1",
+          "name": "Salesforce account - Odoo Sandbox"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "lead",
+        "operation": "create",
+        "additionalFields": {
+          "FirstName": "={{$node['Odoo'].json.name.split(' ')[0]}}",
+          "LastName": "={{$node['Odoo'].json.name.split(' ').slice(1).join(' ')}}",
+          "Email": "={{$node['Odoo'].json.email}}",
+          "Company": "={{$node['Odoo'].json.company}}"
+        }
+      },
+      "id": "4",
+      "name": "Create Salesforce Lead",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 200],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "1",
+          "name": "Salesforce account - Odoo Sandbox"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "lead",
+        "operation": "update",
+        "id": "={{$node['Check Salesforce Lead'].json[0].Id}}",
+        "updateFields": {
+          "FirstName": "={{$node['Odoo'].json.name.split(' ')[0]}}",
+          "LastName": "={{$node['Odoo'].json.name.split(' ').slice(1).join(' ')}}",
+          "Email": "={{$node['Odoo'].json.email}}",
+          "Company": "={{$node['Odoo'].json.company}}"
+        }
+      },
+      "id": "5",
+      "name": "Update Salesforce Lead",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "credentials": {
+        "salesforceOAuth2Api": {
+          "id": "1",
+          "name": "Salesforce account - Odoo Sandbox"
+        }
+      },
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$node['Check Salesforce Lead'].json.length > 0}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "IF Lead Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "error",
+              "value": "Failed to sync lead to Salesforce"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7",
+      "name": "Error Handling",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [1100, 300],
+      "continueOnFail": true
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Odoo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo": {
+      "main": [
+        [
+          {
+            "node": "Check Salesforce Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Salesforce Lead": {
+      "main": [
+        [
+          {
+            "node": "IF Lead Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Lead Exists": {
+      "main": [
+        [
+          {
+            "node": "Update Salesforce Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Salesforce Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Salesforce Lead": {
+      "main": [
+        [
+          {
+            "node": "Error Handling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Salesforce Lead": {
+      "main": [
+        [
+          {
+            "node": "Error Handling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
