@@ -1,7 +1,5 @@
 {
-  "meta": {
-    "instanceId": "your_instance_id"
-  },
+  "name": "Salesforce to Odoo Lead Sync",
   "nodes": [
     {
       "parameters": {
@@ -9,29 +7,30 @@
         "path": "salesforce-to-odoo-lead",
         "options": {}
       },
-      "id": "1",
+      "id": "15e62ad1-736c-4d42-b564-ca5f5095b9b5",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [-736, 80],
+      "webhookId": "a8ca50bf-429c-4001-b55c-2dd0151af250"
     },
     {
       "parameters": {
         "authentication": "oAuth2",
-        "resource": "lead",
+        "resource": "customObject",
         "operation": "get",
-        "id": "={{$node['Webhook'].json.body.Id}}",
+        "customObject": "Lead__c",
+        "recordId": "={{$node['Webhook'].json.body.Id}}",
         "additionalFields": {}
       },
-      "id": "2",
+      "id": "f182e811-f345-45d6-80f1-36f687a94373",
       "name": "Salesforce",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [-528, 80],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "1",
-          "name": "Salesforce account - Odoo Sandbox"
+          "name": "Salesforce account"
         }
       }
     },
@@ -44,21 +43,20 @@
             {
               "field": "email",
               "operator": "equal",
-              "value": "={{$node['Salesforce'].json.email}}"
+              "value": "={{$node['Salesforce'].json.email__c}}"
             }
           ]
         },
         "additionalFields": {}
       },
-      "id": "3",
+      "id": "5dc3a918-e6b2-48a1-9e8a-8230c1b573eb",
       "name": "Check Odoo Lead",
       "type": "n8n-nodes-base.odoo",
       "typeVersion": 1,
-      "position": [680, 300],
+      "position": [-352, 80],
       "credentials": {
-        "odoo": {
-          "id": "2",
-          "name": "Odoo account - Local"
+        "odooApi": {
+          "name": "Odoo account"
         }
       }
     },
@@ -70,32 +68,31 @@
           "values": [
             {
               "field": "name",
-              "value": "={{$node['Salesforce'].json.FirstName + ' ' + $node['Salesforce'].json.LastName}}"
+              "value": "={{$node['Salesforce'].json.name__c}}"
             },
             {
               "field": "email",
-              "value": "={{$node['Salesforce'].json.Email}}"
+              "value": "={{$node['Salesforce'].json.email__c}}"
             },
             {
               "field": "company",
-              "value": "={{$node['Salesforce'].json.Company}}"
+              "value": "={{$node['Salesforce'].json.company__c}}"
             }
           ]
         },
         "additionalFields": {}
       },
-      "id": "4",
+      "id": "2647f4d8-dc6f-4680-a053-6e45c66563e9",
       "name": "Create Odoo Lead",
       "type": "n8n-nodes-base.odoo",
       "typeVersion": 1,
-      "position": [900, 200],
+      "position": [32, 208],
+      "executeOnce": true,
       "credentials": {
-        "odoo": {
-          "id": "2",
-          "name": "Odoo account - Local"
+        "odooApi": {
+          "name": "Odoo account"
         }
-      },
-      "executeOnce": true
+      }
     },
     {
       "parameters": {
@@ -106,32 +103,31 @@
           "values": [
             {
               "field": "name",
-              "value": "={{$node['Salesforce'].json.FirstName + ' ' + $node['Salesforce'].json.LastName}}"
+              "value": "={{$node['Salesforce'].json.name__c}}"
             },
             {
               "field": "email",
-              "value": "={{$node['Salesforce'].json.Email}}"
+              "value": "={{$node['Salesforce'].json.email__c}}"
             },
             {
               "field": "company",
-              "value": "={{$node['Salesforce'].json.Company}}"
+              "value": "={{$node['Salesforce'].json.company__c}}"
             }
           ]
         },
         "additionalFields": {}
       },
-      "id": "5",
+      "id": "f93f84a6-4fd3-45bc-83e0-8785f1a77ed5",
       "name": "Update Odoo Lead",
       "type": "n8n-nodes-base.odoo",
       "typeVersion": 1,
-      "position": [900, 400],
+      "position": [16, -112],
+      "executeOnce": true,
       "credentials": {
-        "odoo": {
-          "id": "2",
-          "name": "Odoo account - Local"
+        "odooApi": {
+          "name": "Odoo account"
         }
-      },
-      "executeOnce": true
+      }
     },
     {
       "parameters": {
@@ -144,11 +140,11 @@
           ]
         }
       },
-      "id": "6",
+      "id": "5f479ebd-8846-476d-a996-c53b8ebcc55d",
       "name": "IF Lead Exists",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [800, 300]
+      "position": [-176, 80]
     },
     {
       "parameters": {
@@ -162,14 +158,15 @@
         },
         "options": {}
       },
-      "id": "7",
+      "id": "50ce31cc-704b-4d70-9b52-793c624c81eb",
       "name": "Error Handling",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [1100, 300],
+      "position": [288, 48],
       "continueOnFail": true
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -244,5 +241,15 @@
         ]
       ]
     }
-  }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3b48de64-2f25-4da5-a074-9c15925b48fc",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "2PNOTBB66kQ3m3Xj",
+  "tags": []
 }

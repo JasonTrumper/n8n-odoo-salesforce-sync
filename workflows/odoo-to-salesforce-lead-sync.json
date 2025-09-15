@@ -1,7 +1,5 @@
 {
-  "meta": {
-    "instanceId": "your_instance_id"
-  },
+  "name": "Odoo to Salesforce Lead Sync",
   "nodes": [
     {
       "parameters": {
@@ -13,7 +11,7 @@
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [240, 300]
+      "position": [-736, 80]
     },
     {
       "parameters": {
@@ -26,23 +24,23 @@
       "name": "Odoo",
       "type": "n8n-nodes-base.odoo",
       "typeVersion": 1,
-      "position": [460, 300],
+      "position": [-528, 80],
       "credentials": {
-        "odoo": {
-          "id": "2",
-          "name": "Odoo account - Local"
+        "odooApi": {
+          "name": "Odoo account"
         }
       }
     },
     {
       "parameters": {
         "authentication": "oAuth2",
-        "resource": "lead",
+        "resource": "customObject",
         "operation": "getAll",
+        "customObject": "Lead__c",
         "queryFilter": {
           "queryFilter": [
             {
-              "field": "Email",
+              "field": "email__c",
               "operator": "equal",
               "value": "={{$node['Odoo'].json.email}}"
             }
@@ -54,64 +52,61 @@
       "name": "Check Salesforce Lead",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [680, 300],
+      "position": [-352, 80],
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "1",
-          "name": "Salesforce account - Odoo Sandbox"
+          "name": "Salesforce account"
         }
       }
     },
     {
       "parameters": {
         "authentication": "oAuth2",
-        "resource": "lead",
+        "resource": "customObject",
         "operation": "create",
+        "customObject": "Lead__c",
         "additionalFields": {
-          "FirstName": "={{$node['Odoo'].json.name.split(' ')[0]}}",
-          "LastName": "={{$node['Odoo'].json.name.split(' ').slice(1).join(' ')}}",
-          "Email": "={{$node['Odoo'].json.email}}",
-          "Company": "={{$node['Odoo'].json.company}}"
+          "name__c": "={{$node['Odoo'].json.name}}",
+          "email__c": "={{$node['Odoo'].json.email}}",
+          "company__c": "={{$node['Odoo'].json.company}}"
         }
       },
       "id": "4",
       "name": "Create Salesforce Lead",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [900, 200],
+      "position": [32, 208],
+      "executeOnce": true,
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "1",
-          "name": "Salesforce account - Odoo Sandbox"
+          "name": "Salesforce account"
         }
-      },
-      "executeOnce": true
+      }
     },
     {
       "parameters": {
         "authentication": "oAuth2",
-        "resource": "lead",
+        "resource": "customObject",
         "operation": "update",
-        "id": "={{$node['Check Salesforce Lead'].json[0].Id}}",
+        "customObject": "Lead__c",
+        "recordId": "={{$node['Check Salesforce Lead'].json[0].Id}}",
         "updateFields": {
-          "FirstName": "={{$node['Odoo'].json.name.split(' ')[0]}}",
-          "LastName": "={{$node['Odoo'].json.name.split(' ').slice(1).join(' ')}}",
-          "Email": "={{$node['Odoo'].json.email}}",
-          "Company": "={{$node['Odoo'].json.company}}"
+          "name__c": "={{$node['Odoo'].json.name}}",
+          "email__c": "={{$node['Odoo'].json.email}}",
+          "company__c": "={{$node['Odoo'].json.company}}"
         }
       },
       "id": "5",
       "name": "Update Salesforce Lead",
       "type": "n8n-nodes-base.salesforce",
       "typeVersion": 1,
-      "position": [900, 400],
+      "position": [16, -112],
+      "executeOnce": true,
       "credentials": {
         "salesforceOAuth2Api": {
-          "id": "1",
-          "name": "Salesforce account - Odoo Sandbox"
+          "name": "Salesforce account"
         }
-      },
-      "executeOnce": true
+      }
     },
     {
       "parameters": {
@@ -128,7 +123,7 @@
       "name": "IF Lead Exists",
       "type": "n8n-nodes-base.if",
       "typeVersion": 1,
-      "position": [800, 300]
+      "position": [-176, 80]
     },
     {
       "parameters": {
@@ -146,10 +141,11 @@
       "name": "Error Handling",
       "type": "n8n-nodes-base.set",
       "typeVersion": 1,
-      "position": [1100, 300],
+      "position": [288, 48],
       "continueOnFail": true
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -224,5 +220,15 @@
         ]
       ]
     }
-  }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b4f1af6f-1fc4-463d-b5da-be85c36d949f",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "3QNOTBB66kQ3m3Xj",
+  "tags": []
 }
