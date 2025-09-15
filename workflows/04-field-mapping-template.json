@@ -1,0 +1,194 @@
+{
+  "name": "04 - Field Mapping Configuration",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "// Load field mappings from external configuration\nconst fs = require('fs');\nconst path = require('path');\n\n// For n8n, we'll use a different approach since fs isn't available\n// This is a template - replace with your actual mappings\nconst fieldMappings = {\n  'Account': {\n    'Name': 'name',\n    'Phone': 'phone',\n    'Website': 'website',\n    'Industry': 'industry_id',\n    'NumberOfEmployees': 'employee_count',\n    'BillingStreet': 'street',\n    'BillingCity': 'city',\n    'BillingPostalCode': 'zip',\n    'BillingCountry': 'country_id',\n    'BillingState': 'state_id'\n  },\n  'Contact': {\n    'FirstName': 'firstname',\n    'LastName': 'lastname',\n    'Email': 'email',\n    'Phone': 'phone',\n    'MobilePhone': 'mobile',\n    'Title': 'function',\n    'MailingStreet': 'street',\n    'MailingCity': 'city',\n    'MailingPostalCode': 'zip',\n    'MailingCountry': 'country_id',\n    'MailingState': 'state_id'\n  }\n};\n\nreturn fieldMappings;"
+      },
+      "name": "Load Field Mappings",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "object",
+        "operation": "getMany",
+        "returnAll": false,
+        "options": {
+          "limit": 50,
+          "loadDefaultFields": true
+        },
+        "credentialType": "salesforceApi",
+        "credentials": {
+          "salesforceApi": {
+            "id": null,
+            "name": "Salesforce account - Odoo Sandbox"
+          }
+        }
+      },
+      "name": "Get Salesforce Fields",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        240,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getMany",
+        "resource": "model",
+        "returnAll": true,
+        "options": {
+          "fieldsToInclude": [
+            {
+              "field": "model",
+              "value": "="
+            },
+            {
+              "field": "name",
+              "value": "="
+            }
+          ]
+        },
+        "credentialType": "odooApi",
+        "credentials": {
+          "odooApi": {
+            "id": null,
+            "name": "Odoo account - Local"
+          }
+        }
+      },
+      "name": "Get Odoo Models",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        240,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate mapping UI configuration\nconst fieldMappings = $input.first().json;\nconst salesforceFields = $input.all()[1].json;\nconst odooModels = $input.all()[2].json;\n\n// Create a mapping configuration object\nconst mappingConfig = {\n  available_objects: Object.keys(fieldMappings),\n  current_mappings: fieldMappings,\n  salesforce_fields: salesforceFields,\n  odoo_models: odooModels,\n  generated_at: new Date().toISOString()\n};\n\nreturn mappingConfig;"
+      },
+      "name": "Generate Mapping Config",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "fileName": "field-mapping-config-{{Date.now()}}.json",
+        "options": {
+          "append": false
+        }
+      },
+      "name": "Save Mapping Config",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        760,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "level": "info",
+        "message": "Field mapping configuration generated. {{ $json.available_objects.length }} objects configured."
+      },
+      "name": "Log Mapping Complete",
+      "type": "n8n-nodes-base.sentryIo",
+      "typeVersion": 1,
+      "position": [
+        760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Template for custom field transformation\nfunction transformFieldValue(sfValue, sfField, odooField) {\n  // Add custom transformation logic here\n  \n  // Example: Convert Salesforce picklist to Odoo selection\n  const picklistMappings = {\n    'Industry': {\n      'Technology': 'tech',\n      'Healthcare': 'healthcare',\n      'Finance': 'finance'\n    },\n    'Rating': {\n      'Hot': 'high',\n      'Warm': 'medium',\n      'Cold': 'low'\n    }\n  };\n  \n  if (picklistMappings[sfField] && picklistMappings[sfField][sfValue]) {\n    return picklistMappings[sfField][sfValue];\n  }\n  \n  // Default: return original value\n  return sfValue;\n}\n\n// Example usage:\n// const transformedValue = transformFieldValue('Technology', 'Industry', 'industry_id');\n\nreturn transformFieldValue.toString();"
+      },
+      "name": "Field Transformation Template",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Load Field Mappings": {
+      "main": [
+        [
+          {
+            "node": "Generate Mapping Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Field Transformation Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Salesforce Fields": {
+      "main": [
+        [
+          {
+            "node": "Generate Mapping Config",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Odoo Models": {
+      "main": [
+        [
+          {
+            "node": "Generate Mapping Config",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Generate Mapping Config": {
+      "main": [
+        [
+          {
+            "node": "Save Mapping Config",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Mapping Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "field-mapping-template-001",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}

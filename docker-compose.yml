@@ -12,6 +12,8 @@ services:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
       retries: 5
+    networks:
+      - n8n-network
 
   n8n:
     image: n8nio/n8n:latest
@@ -25,12 +27,17 @@ services:
       DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
       DB_POSTGRESDB_USER: ${POSTGRES_USER}
       DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
       # N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE}
       # N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
       # N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
-      GENERIC_TIMEZONE: America/New_York
+      # GENERIC_TIMEZONE: America/New_York
+      GENERIC_TIMEZONE: UTC
       # N8N_USER_MANAGEMENT_DISABLED: "true"
-      # N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
       # N8N_TUNNEL_SUBDOMAIN_DISABLED: "true"
       N8N_RUNNERS_ENABLED: "true"
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
@@ -41,7 +48,14 @@ services:
         condition: service_healthy
     volumes:
       - ./n8n_data:/home/node/.n8n
+      - ./workflows:/backups/workflows
+    networks:
+      - n8n-network
 
 volumes:
   postgres_data:
   n8n_data:
+
+networks:
+  n8n-network:
+    driver: bridge

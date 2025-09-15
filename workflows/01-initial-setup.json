@@ -1,0 +1,151 @@
+{
+  "name": "01 - Initial Setup & Object Discovery",
+  "nodes": [
+    {
+      "parameters": {
+        "resource": "object",
+        "operation": "getMany",
+        "returnAll": true,
+        "options": {
+          "loadDefaultFields": true
+        },
+        "credentialType": "salesforceApi",
+        "credentials": {
+          "salesforceApi": {
+            "id": null,
+            "name": "Salesforce account - Odoo Sandbox"
+          }
+        }
+      },
+      "name": "Get Salesforce Objects",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getMany",
+        "resource": "model",
+        "returnAll": true,
+        "options": {
+          "fieldsToInclude": [
+            {
+              "field": "model",
+              "value": "="
+            },
+            {
+              "field": "name",
+              "value": "="
+            }
+          ]
+        },
+        "credentialType": "odooApi",
+        "credentials": {
+          "odooApi": {
+            "id": null,
+            "name": "Odoo account - Local"
+          }
+        }
+      },
+      "name": "Get Odoo Models",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        240,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse and structure the data\nconst salesforceObjects = $input.first().json;\nconst odooModels = $input.all()[1].json;\n\n// Create mapping suggestions\nconst mappingSuggestions = {\n  'Account': 'res.partner',\n  'Contact': 'res.partner',\n  'Opportunity': 'crm.lead',\n  'Lead': 'crm.lead',\n  'Product2': 'product.product',\n  'Pricebook2': 'product.pricelist',\n  'Order': 'sale.order',\n  'OrderItem': 'sale.order.line',\n  'Case': 'crm.helpdesk',\n  'Task': 'project.task'\n};\n\n// Generate report\nconst report = {\n  salesforce_object_count: salesforceObjects.length,\n  odoo_model_count: odooModels.length,\n  suggested_mappings: mappingSuggestions,\n  salesforce_objects: salesforceObjects.map(obj => ({\n    name: obj.name,\n    label: obj.label,\n    custom: obj.custom\n  })),\n  odoo_models: odooModels.map(model => ({\n    model: model.model,\n    name: model.name\n  }))\n};\n\nreturn report;"
+      },
+      "name": "Generate Mapping Report",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "fileName": "mapping-report-{{Date.now()}}.json",
+        "options": {
+          "append": false
+        }
+      },
+      "name": "Save Report to File",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        760,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "level": "info",
+        "message": "Initial setup completed. Found {{ $json.salesforce_object_count }} Salesforce objects and {{ $json.odoo_model_count }} Odoo models."
+      },
+      "name": "Log Completion",
+      "type": "n8n-nodes-base.sentryIo",
+      "typeVersion": 1,
+      "position": [
+        760,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Get Salesforce Objects": {
+      "main": [
+        [
+          {
+            "node": "Generate Mapping Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Odoo Models": {
+      "main": [
+        [
+          {
+            "node": "Generate Mapping Report",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generate Mapping Report": {
+      "main": [
+        [
+          {
+            "node": "Save Report to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "id": "initial-setup-001",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}

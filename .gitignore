@@ -2,3 +2,4 @@ n8n-odoo-salesforce-sync notes.txt
 .env
 n8n_data/*
 postgres_data/*
+node_modules
